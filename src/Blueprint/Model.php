@@ -87,11 +87,11 @@ abstract class Model
     /**
      * Execute Select SQL statement
      */
-    public function select(string|int $id, $key = null): object|false
+    public function select(string|int $id, $key = null): array|object|false
     {
         $sql = sprintf(
             "SELECT * FROM %s WHERE %s = ? LIMIT 1",
-            $table ?? $this->table,
+            $this->table,
             $key ?? $this->key
         );
 

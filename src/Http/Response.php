@@ -30,7 +30,7 @@ class Response
      */
     public static function isValidCode(int $code): bool
     {
-        return $code > 100 || $code <= 600;
+        return $code >= 100 && $code <= 600;
     }
 
     /**

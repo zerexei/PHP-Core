@@ -11,7 +11,7 @@ trait Route
     {
         if (!file_exists($file)) {
             throw new \Exception(
-                sprintf('File: "%s" does not exists.', $file)
+                sprintf('File: "%s" does not exist.', $file)
             );
         }
 

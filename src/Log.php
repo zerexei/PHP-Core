@@ -27,6 +27,11 @@ class Log
         $message = $start . sprintf('%s - [%s] %s %s  %s', $date, $method, $route, $ip . PHP_EOL, $error) . $end;
 
         $file = Application::get('path.app') . "/logs/log.txt";
+        $dir = dirname($file);
+
+        if (!is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
 
         file_put_contents($file, $message, FILE_APPEND);
     }

@@ -49,7 +49,7 @@ trait RouterController
     {
         if (!class_exists($controller[0])) {
             throw new \Exception(
-                sprintf('Controller: "%s" does not exists.', $controller[0])
+                sprintf('Controller: "%s" does not exist.', $controller[0])
             );
         }
 
@@ -79,7 +79,7 @@ trait RouterController
     {
         if (!is_callable($class)) {
             throw new \Exception(
-                sprintf('Method: "__invoke" does not exists on %s.', $class::class)
+                sprintf('Method: "__invoke" does not exist on %s.', $class::class)
             );
         }
 

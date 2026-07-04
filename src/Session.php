@@ -24,24 +24,54 @@ class Session
     }
 
     /**
-     * Set a flash session
+     * Helper to set a flash message in a specific bag
      */
-    public function setFlash(string $key, string $message): void
+    protected function setFlashMessage(string $bag, string $key, string $message): void
     {
-        $message = filter_var($message, FILTER_SANITIZE_STRING);
+        $message = strip_tags(htmlspecialchars($message, ENT_QUOTES, 'UTF-8'));
 
-        $_SESSION[static::FLASH_KEY][$key] = [
+        $_SESSION[$bag][$key] = [
             'value' => $message,
             'remove' => false
         ];
     }
 
     /**
+     * Helper to retrieve a flash message from a specific bag
+     */
+    protected function getFlashMessage(string $bag, string $key): ?string
+    {
+        return $_SESSION[$bag][$key]['value'] ?? null;
+    }
+
+    /**
+     * Helper to retrieve all messages from a specific bag
+     */
+    protected function getBag(string $bag): array
+    {
+        $messages = $_SESSION[$bag] ?? [];
+
+        foreach ($messages as $key => $value) {
+            $messages[$key] = $value['value'];
+        }
+
+        return $messages;
+    }
+
+    /**
+     * Set a flash session
+     */
+    public function setFlash(string $key, string $message): void
+    {
+        $this->setFlashMessage(static::FLASH_KEY, $key, $message);
+    }
+
+    /**
      * Return a flash session
      */
-    public function getFlash(string $key): string
+    public function getFlash(string $key): ?string
     {
-        return $_SESSION[static::FLASH_KEY][$key]['value'] ?? null;
+        return $this->getFlashMessage(static::FLASH_KEY, $key);
     }
 
     /**
@@ -49,13 +79,7 @@ class Session
      */
     public function flashBag(): array
     {
-        $flash =  $_SESSION[static::FLASH_KEY] ?? [];
-
-        foreach ($flash as $key => $value) {
-            $flash[$key] = $value['value'];
-        }
-
-        return $flash;
+        return $this->getBag(static::FLASH_KEY);
     }
 
     /**
@@ -63,20 +87,15 @@ class Session
      */
     public function setErrorFlash(string $key, string $message): void
     {
-        $message = filter_var($message, FILTER_SANITIZE_STRING);
-
-        $_SESSION[static::ERROR_KEY][$key] = [
-            'value' => $message,
-            'remove' => false
-        ];
+        $this->setFlashMessage(static::ERROR_KEY, $key, $message);
     }
 
     /**
      * Return a error flash session
      */
-    public function getErrorFlash(string $key): string
+    public function getErrorFlash(string $key): ?string
     {
-        return $_SESSION[static::ERROR_KEY][$key]['value'] ?? null;
+        return $this->getFlashMessage(static::ERROR_KEY, $key);
     }
 
     /**
@@ -84,16 +103,7 @@ class Session
      */
     public function errorBag(): array
     {
-        // create a copy of session
-        $errors = $_SESSION[static::ERROR_KEY] ?? [];
-
-        // flatten array
-        foreach ($errors as $key => $value) {
-            $errors[$key] = $value['value'];
-        }
-
-        // return all errors
-        return $errors;
+        return $this->getBag(static::ERROR_KEY);
     }
 
     /**
@@ -102,7 +112,7 @@ class Session
     public function set(string $key, mixed $value): void
     {
         if (is_string($value)) {
-            $value = filter_var($value, FILTER_SANITIZE_STRING);
+            $value = strip_tags(htmlspecialchars($value, ENT_QUOTES, 'UTF-8'));
         }
 
         $_SESSION[$key] = $value;
@@ -119,7 +129,7 @@ class Session
     /**
      * Return all session
      */
-    public function all()
+    public function all(): array
     {
         return $_SESSION ?? [];
     }
@@ -129,15 +139,11 @@ class Session
      */
     protected function toFlush(): void
     {
-        if (isset($_SESSION[static::FLASH_KEY])) {
-            foreach ($_SESSION[static::FLASH_KEY] as $_ => &$message) {
-                $message['remove'] = true;
-            }
-        }
-
-        if (isset($_SESSION[static::ERROR_KEY])) {
-            foreach ($_SESSION[static::ERROR_KEY] as $_ => &$message) {
-                $message['remove'] = true;
+        foreach ([static::FLASH_KEY, static::ERROR_KEY] as $bag) {
+            if (isset($_SESSION[$bag])) {
+                foreach ($_SESSION[$bag] as &$message) {
+                    $message['remove'] = true;
+                }
             }
         }
     }
@@ -147,18 +153,12 @@ class Session
      */
     protected function flush(): void
     {
-        if (isset($_SESSION[static::FLASH_KEY])) {
-            foreach ($_SESSION[static::FLASH_KEY] as $key => &$message) {
-                if ($message['remove']) {
-                    unset($_SESSION[static::FLASH_KEY][$key]);
-                }
-            }
-        }
-
-        if (isset($_SESSION[static::ERROR_KEY])) {
-            foreach ($_SESSION[static::ERROR_KEY] as $key => &$message) {
-                if ($message['remove']) {
-                    unset($_SESSION[static::ERROR_KEY][$key]);
+        foreach ([static::FLASH_KEY, static::ERROR_KEY] as $bag) {
+            if (isset($_SESSION[$bag])) {
+                foreach ($_SESSION[$bag] as $key => $message) {
+                    if ($message['remove']) {
+                        unset($_SESSION[$bag][$key]);
+                    }
                 }
             }
         }

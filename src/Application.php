@@ -34,14 +34,15 @@ class Application extends Container
      * 
      * @var string
      */
-    public const ROOT_DIR = '/';
+    public string $ROOT_DIR = '/';
 
     /**
      * Register all the application default configs & services
      */
-    public function __construct(array $config = null)
+    public function __construct(?array $config = null)
     {
         static::$instance = $this;
+        $config = $config ?? [];
         $this->ROOT_DIR = $config['root_dir'] ?? '/';
         $this->registerServices($config);
     }

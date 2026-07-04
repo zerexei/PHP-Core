@@ -11,20 +11,19 @@ class Migration
      */
     public function apply()
     {
-        if (!Application::exitst('database')) {
+        if (!Application::has('database')) {
             throw new \Exception("Please setup a database.");
         }
 
-        if (!Application::exitst('path.databases')) {
+        if (!Application::has('path.databases')) {
             throw new \Exception("Please setup a migration path.");
         }
 
-        // TODO: rename $path to a more informative name ($migration_dir_path)
-        $path = Application::get('path.databases') . '/migrations';
+        $migrationDirPath = Application::get('path.databases') . '/migrations';
 
-        if (!file_exists($path) || !is_dir($path)) {
+        if (!file_exists($migrationDirPath) || !is_dir($migrationDirPath)) {
             throw new \Exception(
-                sprintf('Directory: "%s" does not exists.', $path)
+                sprintf('Directory: "%s" does not exist.', $migrationDirPath)
             );
         }
 
@@ -32,19 +31,19 @@ class Migration
 
         $appliedMigrations = $this->getAppliedMigrations();
 
-        $migrations = array_diff(scandir($path), ['.', '..']);
+        $migrations = array_diff(scandir($migrationDirPath), ['.', '..']);
         $toApplyMigrations = array_diff($migrations, $appliedMigrations);
 
         $newMigrations = [];
 
         foreach ($toApplyMigrations as $migration) {
-            require_once $path ."/". $migration;
+            require_once $migrationDirPath . "/" . $migration;
 
             $class = $this->getClassname($migration);
 
             if (!class_exists($class)) {
                 throw new \Exception(
-                    sprintf('Class: "%s" does not exists on FILE: "%s".', $class, $migration)
+                    sprintf('Class: "%s" does not exist on FILE: "%s".', $class, $migration)
                 );
             }
 
@@ -52,7 +51,7 @@ class Migration
 
             if (!method_exists($object::class, 'up')) {
                 throw new \Exception(sprintf(
-                    'Method: "up()" does not exists on Class: "%s" in File: "%s".',
+                    'Method: "up()" does not exist on Class: "%s" in File: "%s".',
                     $object::class,
                     $migration
                 ));

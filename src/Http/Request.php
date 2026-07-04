@@ -15,13 +15,22 @@ class Request
 
     public function __construct()
     {
-        // sanitze request
-        $this->attributes = array_map(function (string $request) {
-            if (!is_string($request)) return $request;
-            $filter = filter_var($request, FILTER_SANITIZE_STRING);
-            $xhtml = htmlspecialchars($filter);
-            return strip_tags($xhtml);
-        }, $_REQUEST);
+        // sanitize request
+        $this->attributes = $this->sanitize($_REQUEST);
+    }
+
+    /**
+     * Recursively sanitize request input values
+     */
+    protected function sanitize(mixed $data): mixed
+    {
+        if (is_array($data)) {
+            return array_map([$this, 'sanitize'], $data);
+        }
+        if (!is_string($data)) {
+            return $data;
+        }
+        return strip_tags(htmlspecialchars($data, ENT_QUOTES, 'UTF-8'));
     }
 
     /**
@@ -29,7 +38,7 @@ class Request
      */
     public static function uri(): string
     {
-        $url = trim($_SERVER['REQUEST_URI'], '/');
+        $url = trim($_SERVER['REQUEST_URI'] ?? '', '/');
         $filter = filter_var($url, FILTER_SANITIZE_URL);
         return parse_url($filter, PHP_URL_PATH);
     }
@@ -39,14 +48,14 @@ class Request
      */
     public static function method(): string
     {
-        $method = filter_var($_SERVER['REQUEST_METHOD'], FILTER_SANITIZE_STRING);
+        $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
         return strtoupper($method);
     }
 
     /**
      * Request query string
      */
-    public static function query(string $key = null): mixed
+    public static function query(?string $key = null): mixed
     {
         if (is_null($key)) return $_GET;
 

@@ -5,7 +5,7 @@ namespace Zeretei\PHPCore\Database;
 class QueryBuilder
 {
     /**
-     * PDO instnace
+     * PDO instance
      */
     protected \PDO $pdo;
 

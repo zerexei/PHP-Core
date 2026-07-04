@@ -3,7 +3,7 @@
 namespace Zeretei\PHPCore;
 
 /**
- * Service cointainer for Application 
+ * Service container for Application 
  */
 class Container
 {
@@ -32,7 +32,7 @@ class Container
     {
         if (!array_key_exists($key, static::$registry)) {
             throw new \Exception(
-                sprintf('No "%s" is registed in the container.', $key)
+                sprintf('No "%s" is registered in the container.', $key)
             );
         }
 
@@ -48,7 +48,7 @@ class Container
     }
 
     /**
-     * Get all the registed services
+     * Get all the registered services
      */
     public static function all()
     {

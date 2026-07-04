@@ -13,7 +13,7 @@ trait Validator
     protected static $ERROR_MESSAGES = [
         'required' => 'The {field} is required.',
         'string' => 'The {field} must be a string.',
-        'email' => 'Invalid Email Adress.',
+        'email' => 'Invalid Email Address.',
         'min' => 'Your {field} is too short, min of {min}.',
         'max' => 'Your {field} is too long, max of {max}.',
         'same' => 'The {field} and {key} did not match.',
@@ -37,8 +37,9 @@ trait Validator
 
         foreach ($fields as $key => $rules) {
             if (!is_string($key)) {
+                $rulesStr = is_array($rules) ? json_encode($rules) : (string)$rules;
                 throw new \Exception(
-                    sprintf('Request "%s" is missing a field or a rule', $rules)
+                    sprintf('Request is missing a field or a rule for validation key: "%s"', $rulesStr)
                 );
             }
 
@@ -48,7 +49,7 @@ trait Validator
 
             if (is_null($value)) {
                 throw new \Exception(
-                    sprintf('request field "%s" does not exists.', $this->input)
+                    sprintf('request field "%s" does not exist.', $this->input)
                 );
             }
 
@@ -220,7 +221,7 @@ trait Validator
         [$rule, $parameter] = [...explode(':', $rule), null];
 
         if (!method_exists($this::class, $rule)) {
-            throw new \Exception(sprintf('Rule "%s" does not exists', $rule));
+            throw new \Exception(sprintf('Rule "%s" does not exist', $rule));
         }
 
         return $this->{$rule}($value, $parameter);

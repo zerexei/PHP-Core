@@ -89,7 +89,10 @@ class Router
         $url = filter_var($url, FILTER_SANITIZE_URL);
 
         if (is_array($controller)) {
-            $controller = filter_var_array($controller, FILTER_SANITIZE_STRING);
+            $controller = array_map(
+                fn ($item) => strip_tags(htmlspecialchars((string) $item, ENT_QUOTES, 'UTF-8')),
+                $controller
+            );
         }
 
         self::$routes[$method][$url] = $controller;

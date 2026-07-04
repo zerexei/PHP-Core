@@ -19,12 +19,12 @@ abstract class Controller
     protected array $middlewares = [];
 
     /**
-     * Throw an error when a method does not exists
+     * Throw an error when a method does not exist
      */
     public function __call($method, $parameters)
     {
         throw new \Exception(sprintf(
-            'Method: "%s()" does not exists on %s.',
+            'Method: "%s()" does not exist on %s.',
             $method,
             static::class
         ));
