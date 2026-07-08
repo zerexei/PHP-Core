@@ -28,5 +28,9 @@
             "Tests\\": "tests/"
         }
     },
-    "prefer-stable": true
+    "prefer-stable": true,
+    "scripts": {
+        "dev": "php -S localhost:8000 -t public",
+        "test": "phpunit"
+    }
 }
