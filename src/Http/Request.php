@@ -121,6 +121,6 @@ class Request
             return $_SERVER['HTTP_X_FORWARDED_FOR'];
         }
 
-        return $_SERVER['REMOTE_ADDR'];
+        return $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
     }
 }

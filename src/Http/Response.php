@@ -53,9 +53,13 @@ class Response
     public function redirect(string $path, int $status = self::HTTP_FOUND)
     {
         if (!headers_sent()) {
-            $realSubPath = str_replace('.', '/', $path);
-            $realPath = trim($realSubPath, '/');
-            header("location:/{$realPath}", true, $status);
+            if (filter_var($path, FILTER_VALIDATE_URL)) {
+                header("location: {$path}", true, $status);
+            } else {
+                $realSubPath = str_replace('.', '/', $path);
+                $realPath = trim($realSubPath, '/');
+                header("location: /{$realPath}", true, $status);
+            }
             exit;
         }
     }

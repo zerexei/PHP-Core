@@ -129,7 +129,8 @@ abstract class Model
     protected function getBaseClassname(): string
     {
         $class = get_called_class();
-        $base = basename(str_replace('\\', DIRECTORY_SEPARATOR, $class));
-        return  strtolower($base);
+        $pos = strrpos($class, '\\');
+        $base = ($pos === false) ? $class : substr($class, $pos + 1);
+        return strtolower($base);
     }
 }

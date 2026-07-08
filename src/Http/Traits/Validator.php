@@ -177,7 +177,7 @@ trait Validator
      */
     public function isNumeric(string $value): bool
     {
-        return !preg_match('/[^0-9]/', $value);
+        return $value !== '' && ctype_digit($value);
     }
 
     /**

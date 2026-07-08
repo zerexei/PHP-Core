@@ -5,9 +5,13 @@
 if (!function_exists('ddd')) {
     function ddd(...$data)
     {
-        echo "<pre>";
-        var_dump(...$data);
-        echo "</pre>";
+        if (PHP_SAPI === 'cli') {
+            var_dump(...$data);
+        } else {
+            echo "<pre>";
+            var_dump(...$data);
+            echo "</pre>";
+        }
         exit;
     }
 }

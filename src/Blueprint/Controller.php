@@ -14,7 +14,7 @@ abstract class Controller
     protected string $action;
 
     /**
-     * @var \Zeretei\PHPCore\Blueprint\Middleware
+     * @var \Zeretei\PHPCore\Blueprint\Middleware[]
      */
     protected array $middlewares = [];
 

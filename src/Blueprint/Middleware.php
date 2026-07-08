@@ -23,6 +23,18 @@ abstract class Middleware
     }
 
     /**
+     * Determine if the middleware applies to the given action
+     */
+    public function shouldExecute(string $action): bool
+    {
+        if (empty($this->actions)) {
+            return true;
+        }
+
+        return in_array($action, $this->actions);
+    }
+
+    /**
      * Execute middleware
      */
     abstract public function execute(string $action);

@@ -45,7 +45,11 @@ class Router
      */
     public function resolve(string $uri, string $method): mixed
     {
-        $method = $_POST["_method"] ?? $method;
+        $method = strtoupper($method);
+
+        if ($method === 'POST' && isset($_POST['_method'])) {
+            $method = strtoupper($_POST['_method']);
+        }
 
         if (!$this->isValidVerb($method)) {
             throw new \Exception(

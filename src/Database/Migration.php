@@ -118,8 +118,10 @@ class Migration
     protected function getClassname(string $migration): string
     {
         $filename = pathinfo($migration, PATHINFO_FILENAME);
-        $migration = array_slice(explode('_', $filename), 1);
-        $className = implode('', array_map('ucfirst', $migration));
-        return $className;
+        $parts = explode('_', $filename);
+        if (count($parts) > 1) {
+            $parts = array_slice($parts, 1);
+        }
+        return implode('', array_map('ucfirst', $parts));
     }
 }

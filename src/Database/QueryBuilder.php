@@ -14,11 +14,17 @@ class QueryBuilder
      */
     public function __construct(array $config)
     {
+        $defaultOptions = [
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        ];
+        $options = ($config['options'] ?? []) + $defaultOptions;
+
         $this->pdo = new \PDO(
             $config['connection'] . ';dbname=' . $config['name'],
             $config['username'],
             $config['password'],
-            $config['options']
+            $options
         );
     }
 
