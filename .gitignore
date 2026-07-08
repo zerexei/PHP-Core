@@ -1,4 +1,13 @@
-/vendor
-logs/
-notes.php
-config.php
+/vendor/
+/logs/
+
+# PHPUnit cache
+.phpunit.result.cache
+
+# IDEs
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db

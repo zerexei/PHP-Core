@@ -1,5 +1,6 @@
 {
     "name": "zeretei/php-core",
+    "version": "0.2.0",
     "description": "A lightweight, zero-dependency PHP MVC micro-framework.",
     "type": "library",
     "license": "MIT",
