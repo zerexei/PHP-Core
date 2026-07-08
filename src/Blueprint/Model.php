@@ -1,8 +1,8 @@
 <?php
 
-namespace Zerexei\PHPCore\Blueprint;
+namespace Zeretei\PHPCore\Blueprint;
 
-use Zerexei\PHPCore\Application;
+use Zeretei\PHPCore\Application;
 
 /**
  * Base class for database-backed models.

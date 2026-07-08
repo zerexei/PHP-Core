@@ -6,7 +6,7 @@ namespace Tests;
 
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
-use Zerexei\PHPCore\Session;
+use Zeretei\PHPCore\Session;
 
 #[CoversClass(Session::class)]
 class SessionTest extends TestCase

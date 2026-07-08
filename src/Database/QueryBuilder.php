@@ -1,6 +1,6 @@
 <?php
 
-namespace Zerexei\PHPCore\Database;
+namespace Zeretei\PHPCore\Database;
 
 /**
  * Thin PDO wrapper providing parameterized query helpers.

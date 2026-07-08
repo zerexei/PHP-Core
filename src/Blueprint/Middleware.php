@@ -1,6 +1,6 @@
 <?php
 
-namespace Zerexei\PHPCore\Blueprint;
+namespace Zeretei\PHPCore\Blueprint;
 
 abstract class Middleware
 {

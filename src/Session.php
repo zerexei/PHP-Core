@@ -1,6 +1,6 @@
 <?php
 
-namespace Zerexei\PHPCore;
+namespace Zeretei\PHPCore;
 
 /**
  * Session manager with two-pass flash bags.

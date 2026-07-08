@@ -111,8 +111,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-use Zerexei\PHPCore\Application;
-use Zerexei\PHPCore\Http\Request;
+use Zeretei\PHPCore\Application;
+use Zeretei\PHPCore\Http\Request;
 
 $config = require_once __DIR__ . '/../config.php';
 
@@ -160,7 +160,7 @@ return [
 `Application` extends `Container`, giving you a static service registry accessible from anywhere:
 
 ```php
-use Zerexei\PHPCore\Application;
+use Zeretei\PHPCore\Application;
 
 $config   = Application::get('config');    // array
 $router   = Application::get('router');    // Router
@@ -190,7 +190,7 @@ Define routes in `app/routes.php`. The file must return a callable that receives
 <?php
 
 // app/routes.php
-use Zerexei\PHPCore\Http\Router;
+use Zeretei\PHPCore\Http\Router;
 use App\Controllers\UserController;
 
 return function (Router $router): void {
@@ -243,7 +243,7 @@ HTML forms only support GET and POST. For PUT/PATCH/DELETE, add a hidden field:
 ### Accessing input
 
 ```php
-use Zerexei\PHPCore\Application;
+use Zeretei\PHPCore\Application;
 
 $request = Application::get('request');
 
@@ -292,7 +292,7 @@ public function store(): void
 ## Response
 
 ```php
-use Zerexei\PHPCore\Application;
+use Zeretei\PHPCore\Application;
 
 $response = Application::get('response');
 
@@ -311,7 +311,7 @@ Response::setStatusCode(404);
 The `QueryBuilder` wraps PDO with parameterized statements. All queries use bound parameters — no raw string interpolation.
 
 ```php
-use Zerexei\PHPCore\Application;
+use Zeretei\PHPCore\Application;
 
 $db = Application::get('database');
 
@@ -342,7 +342,7 @@ Extend `Model`, declare `$fillable`, and get CRUD for free. Keys not in `$fillab
 
 namespace App\Models;
 
-use Zerexei\PHPCore\Blueprint\Model;
+use Zeretei\PHPCore\Blueprint\Model;
 
 class User extends Model
 {
@@ -385,7 +385,7 @@ Extend `Controller` and define public methods that map to route actions. Use `re
 
 namespace App\Controllers;
 
-use Zerexei\PHPCore\Blueprint\Controller;
+use Zeretei\PHPCore\Blueprint\Controller;
 use App\Middleware\AuthMiddleware;
 
 class UserController extends Controller
@@ -424,8 +424,8 @@ Extend `Middleware` and implement `execute()`. Pass action names to the construc
 
 namespace App\Middleware;
 
-use Zerexei\PHPCore\Blueprint\Middleware;
-use Zerexei\PHPCore\Application;
+use Zeretei\PHPCore\Blueprint\Middleware;
+use Zeretei\PHPCore\Application;
 
 class AuthMiddleware extends Middleware
 {
@@ -510,7 +510,7 @@ class CreateUsersTable
 ### Running migrations
 
 ```php
-use Zerexei\PHPCore\Database\Migration;
+use Zeretei\PHPCore\Database\Migration;
 
 (new Migration())->apply();
 ```

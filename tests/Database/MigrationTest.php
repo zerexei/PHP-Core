@@ -7,7 +7,7 @@ namespace Tests\Database;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
-use Zerexei\PHPCore\Database\Migration;
+use Zeretei\PHPCore\Database\Migration;
 
 #[CoversClass(Migration::class)]
 class MigrationTest extends TestCase

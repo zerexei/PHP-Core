@@ -17,7 +17,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Zerexei\\PHPCore\\": "src/"
+            "Zeretei\\PHPCore\\": "src/"
         },
         "files": [
             "src/helpers.php"

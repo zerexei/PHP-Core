@@ -1,9 +1,9 @@
 <?php
 
-namespace Zerexei\PHPCore\Http;
+namespace Zeretei\PHPCore\Http;
 
-use \Zerexei\PHPCore\Http\Traits\Route;
-use \Zerexei\PHPCore\Http\Traits\RouterController;
+use \Zeretei\PHPCore\Http\Traits\Route;
+use \Zeretei\PHPCore\Http\Traits\RouterController;
 
 class Router
 {

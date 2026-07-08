@@ -6,7 +6,7 @@ namespace Tests;
 
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
-use Zerexei\PHPCore\Container;
+use Zeretei\PHPCore\Container;
 
 #[CoversClass(Container::class)]
 class ContainerTest extends TestCase

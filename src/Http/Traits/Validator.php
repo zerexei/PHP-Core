@@ -1,9 +1,9 @@
 <?php
 
-namespace Zerexei\PHPCore\Http\Traits;
+namespace Zeretei\PHPCore\Http\Traits;
 
-use \Zerexei\PHPCore\Application;
-use \Zerexei\PHPCore\Http\Request;
+use \Zeretei\PHPCore\Application;
+use \Zeretei\PHPCore\Http\Request;
 
 trait Validator
 {

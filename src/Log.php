@@ -1,10 +1,10 @@
 <?php
 
-namespace Zerexei\PHPCore;
+namespace Zeretei\PHPCore;
 
 use \DateTime;
-use \Zerexei\PHPCore\Application;
-use \Zerexei\PHPCore\Http\Request;
+use \Zeretei\PHPCore\Application;
+use \Zeretei\PHPCore\Http\Request;
 
 /**
  * Simple file logger.

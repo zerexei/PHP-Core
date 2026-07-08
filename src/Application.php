@@ -1,17 +1,17 @@
 <?php
 
-namespace Zerexei\PHPCore;
+namespace Zeretei\PHPCore;
 
-use \Zerexei\PHPCore\Container;
+use \Zeretei\PHPCore\Container;
 
-use \Zerexei\PHPCore\Http\Router;
-use \Zerexei\PHPCore\Http\Request;
-use \Zerexei\PHPCore\Http\Response;
+use \Zeretei\PHPCore\Http\Router;
+use \Zeretei\PHPCore\Http\Request;
+use \Zeretei\PHPCore\Http\Response;
 
-use \Zerexei\PHPCore\Database\QueryBuilder;
+use \Zeretei\PHPCore\Database\QueryBuilder;
 
-use \Zerexei\PHPCore\Session;
-use \Zerexei\PHPCore\Log;
+use \Zeretei\PHPCore\Session;
+use \Zeretei\PHPCore\Log;
 
 /**
  * Application entry point.

@@ -1,8 +1,8 @@
 <?php
 
-namespace Zerexei\PHPCore\Http;
+namespace Zeretei\PHPCore\Http;
 
-use \Zerexei\PHPCore\Http\Traits\Validator;
+use \Zeretei\PHPCore\Http\Traits\Validator;
 
 class Request
 {

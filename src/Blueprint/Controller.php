@@ -1,6 +1,6 @@
 <?php
 
-namespace Zerexei\PHPCore\Blueprint;
+namespace Zeretei\PHPCore\Blueprint;
 
 /**
  * Base class for all controllers.

@@ -7,9 +7,9 @@ namespace Tests\Http;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
-use Zerexei\PHPCore\Http\Router;
-use Zerexei\PHPCore\Http\Traits\Route;
-use Zerexei\PHPCore\Http\Traits\RouterController;
+use Zeretei\PHPCore\Http\Router;
+use Zeretei\PHPCore\Http\Traits\Route;
+use Zeretei\PHPCore\Http\Traits\RouterController;
 
 #[CoversClass(Router::class)]
 #[CoversClass(Route::class)]

@@ -1,6 +1,6 @@
 <?php
 
-namespace Zerexei\PHPCore\Http;
+namespace Zeretei\PHPCore\Http;
 
 /**
  * HTTP response helpers.

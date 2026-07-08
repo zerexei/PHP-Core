@@ -7,7 +7,7 @@ namespace Tests\Http;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
-use Zerexei\PHPCore\Http\Response;
+use Zeretei\PHPCore\Http\Response;
 
 #[CoversClass(Response::class)]
 class ResponseTest extends TestCase

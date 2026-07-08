@@ -1,8 +1,8 @@
 <?php
 
-namespace Zerexei\PHPCore\Database;
+namespace Zeretei\PHPCore\Database;
 
-use \Zerexei\PHPCore\Application;
+use \Zeretei\PHPCore\Application;
 
 /**
  * File-based migration runner.

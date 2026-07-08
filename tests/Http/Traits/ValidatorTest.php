@@ -7,7 +7,7 @@ namespace Tests\Http\Traits;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
-use Zerexei\PHPCore\Http\Traits\Validator;
+use Zeretei\PHPCore\Http\Traits\Validator;
 
 #[CoversClass(Validator::class)]
 class ValidatorTest extends TestCase

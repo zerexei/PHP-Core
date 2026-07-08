@@ -1,6 +1,6 @@
 <?php
 
-namespace Zerexei\PHPCore;
+namespace Zeretei\PHPCore;
 
 /**
  * Lightweight service container / service locator.

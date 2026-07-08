@@ -6,7 +6,7 @@ namespace Tests\Blueprint;
 
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
-use Zerexei\PHPCore\Blueprint\Middleware;
+use Zeretei\PHPCore\Blueprint\Middleware;
 
 #[CoversClass(Middleware::class)]
 class MiddlewareTest extends TestCase

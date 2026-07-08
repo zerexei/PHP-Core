@@ -1,6 +1,6 @@
 <?php
 
-namespace Zerexei\PHPCore\Http\Traits;
+namespace Zeretei\PHPCore\Http\Traits;
 
 trait RouterController
 {
