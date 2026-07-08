@@ -5,12 +5,11 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/zerexei/PHP-Core/blob/main/LICENSE">
-    <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License" />
-  </a>
-  <img src="https://img.shields.io/badge/PHP-%3E%3D%208.2-777bb4.svg" alt="PHP 8.2+" />
-  <img src="https://img.shields.io/badge/version-0.2.0-blue.svg" alt="Version 0.2.0" />
-  <img src="https://img.shields.io/badge/PSR--4-compliant-brightgreen.svg" alt="PSR-4 Compliant" />
+    <img src="https://img.shields.io/packagist/v/zeretei/php-core.svg?style=flat-square" alt="Latest Version on Packagist" />
+    <img src="https://img.shields.io/packagist/dt/zeretei/php-core.svg?style=flat-square" alt="Total Downloads" />
+    <img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square" alt="MIT License" />
+    <img src="https://img.shields.io/badge/php-%3E%3D%208.2-777bb4.svg?style=flat-square" alt="PHP 8.2+" />
+    <img src="https://img.shields.io/badge/PSR--4-compliant-brightgreen.svg?style=flat-square" alt="PSR-4 Compliant" />
 </p>
 
 ---
@@ -53,7 +52,7 @@ A minimal PHP 8.2+ MVC micro-framework with a service container, router, PDO que
 Require via Composer:
 
 ```bash
-composer require zerexei/php-core
+composer require zeretei/php-core
 ```
 
 Then add your application namespace to your project's `composer.json`:
@@ -211,12 +210,12 @@ return function (Router $router): void {
 
 ### Wildcard tokens
 
-| Token   | Matches              | Example         |
-|---------|----------------------|-----------------|
-| `:int`  | Digits only          | `42`            |
-| `:char` | Letters only         | `abc`           |
-| `:str`  | Word characters      | `hello_world`   |
-| `:any`  | Anything             | `foo/bar/baz`   |
+| Token   | Matches         | Example       |
+| ------- | --------------- | ------------- |
+| `:int`  | Digits only     | `42`          |
+| `:char` | Letters only    | `abc`         |
+| `:str`  | Word characters | `hello_world` |
+| `:any`  | Anything        | `foo/bar/baz` |
 
 Captured values are passed as positional arguments to the action:
 
@@ -231,7 +230,7 @@ HTML forms only support GET and POST. For PUT/PATCH/DELETE, add a hidden field:
 
 ```html
 <form method="POST" action="/users/42">
-    <input type="hidden" name="_method" value="DELETE">
+    <input type="hidden" name="_method" value="DELETE" />
     ...
 </form>
 ```
@@ -277,15 +276,15 @@ public function store(): void
 
 #### Available rules
 
-| Rule          | Description                                              |
-|---------------|----------------------------------------------------------|
-| `required`    | Must be non-empty                                        |
-| `string`      | Must be a string                                         |
-| `email`       | Must be a valid email address                            |
-| `min:N`       | Minimum N characters                                     |
-| `max:N`       | Maximum N characters                                     |
-| `same:field`  | Must equal the value of another field                    |
-| `confirm`     | Must equal `{field}_confirmation` (e.g. `password_confirmation`) |
+| Rule         | Description                                                      |
+| ------------ | ---------------------------------------------------------------- |
+| `required`   | Must be non-empty                                                |
+| `string`     | Must be a string                                                 |
+| `email`      | Must be a valid email address                                    |
+| `min:N`      | Minimum N characters                                             |
+| `max:N`      | Maximum N characters                                             |
+| `same:field` | Must equal the value of another field                            |
+| `confirm`    | Must equal `{field}_confirmation` (e.g. `password_confirmation`) |
 
 ---
 
@@ -480,10 +479,10 @@ Migration files live in `app/Databases/migrations/`. Each file name must follow 
 {numeric_prefix}_{PascalCase_class_name_parts}.php
 ```
 
-| Filename                          | Expected class       |
-|-----------------------------------|----------------------|
-| `0001_create_users_table.php`     | `CreateUsersTable`   |
-| `0002_add_email_to_users.php`     | `AddEmailToUsers`    |
+| Filename                      | Expected class     |
+| ----------------------------- | ------------------ |
+| `0001_create_users_table.php` | `CreateUsersTable` |
+| `0002_add_email_to_users.php` | `AddEmailToUsers`  |
 
 ### Writing a migration
 
@@ -522,3 +521,4 @@ Applied migrations are tracked in a `migrations` table so they are never run twi
 ## License
 
 This project is open-source software licensed under the [MIT License](LICENSE).
+
