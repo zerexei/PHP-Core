@@ -1,24 +1,31 @@
 <?php
 
-namespace Zeretei\PHPCore;
+namespace Zerexei\PHPCore;
 
 /**
- * Service container for Application 
+ * Lightweight service container / service locator.
+ *
+ * All registered services are stored statically so they are accessible from
+ * anywhere via Application::get() without needing to thread the container
+ * instance through every call site.
  */
 class Container
 {
     /**
-     * Container instance
+     * The most-recently constructed Container (or Application) instance.
      */
-    protected static $instance;
+    protected static ?self $instance = null;
 
     /**
-     * services placeholder
+     * Registered services keyed by their binding name.
+     *
+     * @var array<string, mixed>
      */
     protected static array $registry = [];
 
     /**
-     * Register a service to the container
+     * Bind a service under the given key.
+     * Overwrites any existing binding for that key.
      */
     public static function bind(string $key, mixed $value): void
     {
@@ -26,13 +33,15 @@ class Container
     }
 
     /**
-     * Get a service from the container
+     * Retrieve a registered service by key.
+     *
+     * @throws \Exception when no service is bound to $key.
      */
     public static function get(string $key): mixed
     {
         if (!array_key_exists($key, static::$registry)) {
             throw new \Exception(
-                sprintf('No "%s" is registered in the container.', $key)
+                sprintf('No service "%s" is registered in the container.', $key)
             );
         }
 
@@ -40,7 +49,7 @@ class Container
     }
 
     /**
-     * check if the $key exists in the container
+     * Return whether a service is registered under $key.
      */
     public static function has(string $key): bool
     {
@@ -48,20 +57,22 @@ class Container
     }
 
     /**
-     * Get all the registered services
+     * Return all registered services.
+     *
+     * @return array<string, mixed>
      */
-    public static function all()
+    public static function all(): array
     {
         return static::$registry;
     }
 
     /**
-     * Get the instance of the Container
+     * Return the current container instance, creating one lazily if needed.
      */
-    public static function getInstance()
+    public static function getInstance(): static
     {
         if (is_null(static::$instance)) {
-            static::$instance = new static;
+            static::$instance = new static();
         }
 
         return static::$instance;

@@ -1,23 +1,32 @@
 <?php
 
-namespace Zeretei\PHPCore\Blueprint;
+namespace Zerexei\PHPCore\Blueprint;
 
-use Zeretei\PHPCore\Application;
+use Zerexei\PHPCore\Application;
 
+/**
+ * Base class for database-backed models.
+ *
+ * Subclasses must define $fillable. $table defaults to the pluralised lowercase
+ * class name (e.g. class User → table "users").
+ */
 abstract class Model
 {
     /**
-     * Database table name
+     * The database table this model reads from and writes to.
      */
     protected string $table;
 
     /**
-     * Fillable inputs
+     * Column names that may be written by insert() and update().
+     * Any key not in this list is silently dropped.
+     *
+     * @var list<string>
      */
     protected array $fillable = [];
 
     /**
-     * SQL where selector key
+     * The primary key column used in WHERE clauses.
      */
     protected string $key = 'id';
 
@@ -29,51 +38,58 @@ abstract class Model
     }
 
     /**
-     * Execute SQL Insert statement
+     * Insert a new row.
+     * Only keys present in $fillable are written.
+     *
+     * @param array<string, mixed> $params
+     * @throws \Exception when $fillable is empty.
      */
     public function insert(array $params): bool
     {
-        $params = $this->filter($params);
-
-        $columns = implode(',', array_keys($params));
-        $values = trim(str_repeat('?,', count($params)), ',');
+        $params  = $this->filter($params);
+        $columns = implode(', ', array_keys($params));
+        $placeholders = implode(', ', array_fill(0, count($params), '?'));
 
         $sql = sprintf(
             'INSERT INTO %s (%s) VALUES (%s)',
             $this->table,
             $columns,
-            $values
+            $placeholders
         );
 
         return Application::get('database')->query($sql, array_values($params));
     }
 
     /**
-     * Execute update SQL statement
+     * Update an existing row identified by its primary key (or a custom key column).
+     * Only keys present in $fillable are written.
+     *
+     * @param string|int           $id     Value of the key column to match.
+     * @param array<string, mixed> $params Columns to update.
+     * @throws \Exception when $fillable is empty.
      */
-    public function update(string|int $id, array $params): bool
+    public function update(string|int $id, array $params, ?string $key = null): bool
     {
-        $params = $this->filter($params);
-
-        $keys = array_keys($params);
-        $set = trim(implode('=?,', $keys) . '=?', ',');
-        $key = [$this->key => $id];
-        $params[] = current($key);
+        $params    = $this->filter($params);
+        $keyColumn = $key ?? $this->key;
+        $set       = implode(' = ?, ', array_keys($params)) . ' = ?';
 
         $sql = sprintf(
             'UPDATE %s SET %s WHERE %s = ?',
             $this->table,
             $set,
-            key($key)
+            $keyColumn
         );
 
-        return Application::get('database')->query($sql, array_values($params));
+        return Application::get('database')->query($sql, [...array_values($params), $id]);
     }
 
     /**
-     * Execute delete SQL statement
+     * Delete a row by its primary key (or a custom key column).
+     *
+     * @param string|int $id Value of the key column to match.
      */
-    public function delete(string|int $id, $key = null): bool
+    public function delete(string|int $id, ?string $key = null): bool
     {
         $sql = sprintf(
             'DELETE FROM %s WHERE %s = ?',
@@ -85,12 +101,15 @@ abstract class Model
     }
 
     /**
-     * Execute Select SQL statement
+     * Fetch a single row by its primary key (or a custom key column).
+     *
+     * @param string|int $id Value of the key column to match.
+     * @return array<string, mixed>|false
      */
-    public function select(string|int $id, $key = null): array|object|false
+    public function select(string|int $id, ?string $key = null): array|false
     {
         $sql = sprintf(
-            "SELECT * FROM %s WHERE %s = ? LIMIT 1",
+            'SELECT * FROM %s WHERE %s = ? LIMIT 1',
             $this->table,
             $key ?? $this->key
         );
@@ -99,38 +118,46 @@ abstract class Model
     }
 
     /**
-     * Execute select all SQL statement
+     * Fetch all rows from the table.
+     *
+     * @return list<array<string, mixed>>
      */
     public function all(): array
     {
-        $sql = "SELECT * FROM {$this->table}";
-        return Application::get('database')->fetchAll($sql);
+        return Application::get('database')->fetchAll("SELECT * FROM {$this->table}");
     }
 
     /**
-     * Filter $request with $this->fillable
+     * Filter $params to only the columns declared in $fillable.
+     *
+     * @param  array<string, mixed> $params
+     * @return array<string, mixed>
+     * @throws \Exception when $fillable is empty (mass-assignment guard).
      */
     protected function filter(array $params): array
     {
         if (empty($this->fillable)) {
-            throw new \Exception('$fillable must have a value.');
+            throw new \Exception(
+                sprintf('$fillable is empty on %s. Define the writable columns.', static::class)
+            );
         }
 
         return array_filter(
             $params,
-            fn ($_, $key) => in_array($key, $this->fillable),
+            fn (mixed $_, string $key) => in_array($key, $this->fillable, true),
             ARRAY_FILTER_USE_BOTH
         );
     }
 
     /**
-     * Filename  to plural classname
+     * Derive the default table name from the unqualified class name.
+     * Example: App\Models\User → "user" → "users".
      */
     protected function getBaseClassname(): string
     {
         $class = get_called_class();
-        $pos = strrpos($class, '\\');
-        $base = ($pos === false) ? $class : substr($class, $pos + 1);
+        $pos   = strrpos($class, '\\');
+        $base  = $pos === false ? $class : substr($class, $pos + 1);
         return strtolower($base);
     }
 }

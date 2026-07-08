@@ -1,43 +1,38 @@
 <?php
 
-namespace Zeretei\PHPCore;
+namespace Zerexei\PHPCore;
 
-use \Zeretei\PHPCore\Container;
+use \Zerexei\PHPCore\Container;
 
-use \Zeretei\PHPCore\Http\Router;
-use \Zeretei\PHPCore\Http\Request;
-use \Zeretei\PHPCore\Http\Response;
+use \Zerexei\PHPCore\Http\Router;
+use \Zerexei\PHPCore\Http\Request;
+use \Zerexei\PHPCore\Http\Response;
 
-use \Zeretei\PHPCore\Database\QueryBuilder;
+use \Zerexei\PHPCore\Database\QueryBuilder;
 
-use \Zeretei\PHPCore\Session;
-use \Zeretei\PHPCore\Log;
+use \Zerexei\PHPCore\Session;
+use \Zerexei\PHPCore\Log;
 
 /**
- * TODO:
- * 1. Add events
- * 2. use proper exception w/ code
- * 
- * Application base class
+ * Application entry point.
+ *
+ * Extends Container to provide a global service registry.
+ * Bootstraps all core services and delegates HTTP dispatch to the Router.
  */
 class Application extends Container
 {
     /**
-     * Application version
-     * 
-     * @var string
+     * Framework version.
      */
-    public const VERSION = '0.1.0';
+    public const VERSION = '0.2.0';
 
     /**
-     * Application root directory
-     * 
-     * @var string
+     * Absolute path to the project root directory.
      */
     public string $ROOT_DIR = '/';
 
     /**
-     * Register all the application default configs & services
+     * Register all default services and boot the application.
      */
     public function __construct(?array $config = null)
     {
@@ -48,43 +43,43 @@ class Application extends Container
     }
 
     /**
-     * Run application
+     * Resolve the current request and dispatch it through the router.
+     * Catches any uncaught exception, logs it, and returns a generic 500 response.
      */
-    public function run(string $uri, string $method)
+    public function run(string $uri, string $method): void
     {
         try {
-            // start routing
             ob_start();
-
             $this->get('router')
                 ->load($this->get('path.routes'))
                 ->resolve($uri, $method);
-
             echo ob_get_clean();
-            exit;
-
         } catch (\Exception $e) {
-            $error = sprintf('[%s] %s  %s',
+            ob_end_clean();
+
+            $error = sprintf(
+                '[%s] %s' . PHP_EOL . '%s',
                 $e->getCode(),
-                $e->getFile() . PHP_EOL,
+                $e->getFile(),
                 $e->getMessage()
             );
 
             Log::set($error);
 
-            ddd($e);
+            Response::setStatusCode(500);
+            echo 'An unexpected error occurred. Please try again later.';
         }
     }
 
     /**
-     * Register the services to the container
+     * Bind the framework's built-in services to the container.
      */
-    protected function registerServices(array $config)
+    protected function registerServices(array $config): void
     {
         $this->bind('config', $config);
 
-        $this->bind('router', new Router());
-        $this->bind('request', new Request());
+        $this->bind('router',   new Router());
+        $this->bind('request',  new Request());
         $this->bind('response', new Response());
 
         $db = $config['database'] ?? [];
@@ -94,6 +89,6 @@ class Application extends Container
         }
 
         $this->bind('session', new Session());
-        $this->bind('log', new Log());
+        $this->bind('log',     new Log());
     }
 }

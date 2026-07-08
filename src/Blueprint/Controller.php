@@ -1,45 +1,53 @@
 <?php
 
-namespace Zeretei\PHPCore\Blueprint;
+namespace Zerexei\PHPCore\Blueprint;
 
 /**
- * Controller base class
+ * Base class for all controllers.
+ *
+ * Provides middleware registration and action tracking.
+ * Extend this class and define public action methods that the Router can dispatch.
  */
 abstract class Controller
 {
-
     /**
-     * Current router controller action executed
+     * The controller action currently being dispatched by the Router.
      */
-    protected string $action;
+    protected string $action = '';
 
     /**
-     * @var \Zeretei\PHPCore\Blueprint\Middleware[]
+     * Middlewares registered for this controller instance.
+     *
+     * @var list<Middleware>
      */
     protected array $middlewares = [];
 
     /**
-     * Throw an error when a method does not exist
+     * Throw a descriptive exception when an undefined method is called.
+     *
+     * @param list<mixed> $parameters
+     * @throws \Exception always
      */
-    public function __call($method, $parameters)
+    public function __call(string $method, array $parameters): never
     {
         throw new \Exception(sprintf(
-            'Method: "%s()" does not exist on %s.',
+            'Method "%s()" does not exist on %s.',
             $method,
             static::class
         ));
     }
 
     /**
-     * Register a middleware
+     * Register a middleware to run before this controller's actions.
+     * Pass action names to the Middleware constructor to scope it to specific actions.
      */
-    protected function registerMiddleware($middleware)
+    protected function registerMiddleware(Middleware $middleware): void
     {
         $this->middlewares[] = $middleware;
     }
 
     /**
-     * Set router controller action
+     * Set the action name being dispatched (called by the Router before dispatch).
      */
     public function setAction(string $action): void
     {
@@ -47,7 +55,9 @@ abstract class Controller
     }
 
     /**
-     * Return all the registered middlewares
+     * Return all registered middlewares for this controller.
+     *
+     * @return list<Middleware>
      */
     public function getMiddlewares(): array
     {

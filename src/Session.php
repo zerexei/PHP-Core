@@ -1,113 +1,93 @@
 <?php
 
-namespace Zeretei\PHPCore;
+namespace Zerexei\PHPCore;
 
+/**
+ * Session manager with two-pass flash bags.
+ *
+ * Flash messages live for exactly one request cycle:
+ *   1. On construction, all existing flash entries are marked for removal.
+ *   2. Any new entries added during this request are NOT marked.
+ *   3. On destruction, only marked entries are deleted.
+ *
+ * Two bags are maintained: `flash_bag` (notifications) and `error_bag` (validation errors).
+ */
 class Session
 {
-    /**
-     * Session flash messages key
-     * 
-     * @var string
-     */
     protected const FLASH_KEY = 'flash_bag';
-
-    /**
-     * Session error messages key
-     * 
-     * @var string
-     */
     protected const ERROR_KEY = 'error_bag';
 
     public function __construct()
     {
-        $this->toFlush();
+        $this->markForFlush();
     }
 
-    /**
-     * Helper to set a flash message in a specific bag
-     */
-    protected function setFlashMessage(string $bag, string $key, string $message): void
-    {
-        $message = strip_tags(htmlspecialchars($message, ENT_QUOTES, 'UTF-8'));
-
-        $_SESSION[$bag][$key] = [
-            'value' => $message,
-            'remove' => false
-        ];
-    }
+    // -------------------------------------------------------------------------
+    // Flash bag (notifications)
+    // -------------------------------------------------------------------------
 
     /**
-     * Helper to retrieve a flash message from a specific bag
-     */
-    protected function getFlashMessage(string $bag, string $key): ?string
-    {
-        return $_SESSION[$bag][$key]['value'] ?? null;
-    }
-
-    /**
-     * Helper to retrieve all messages from a specific bag
-     */
-    protected function getBag(string $bag): array
-    {
-        $messages = $_SESSION[$bag] ?? [];
-
-        foreach ($messages as $key => $value) {
-            $messages[$key] = $value['value'];
-        }
-
-        return $messages;
-    }
-
-    /**
-     * Set a flash session
+     * Store a flash notification under $key.
      */
     public function setFlash(string $key, string $message): void
     {
-        $this->setFlashMessage(static::FLASH_KEY, $key, $message);
+        $this->writeFlashEntry(static::FLASH_KEY, $key, $message);
     }
 
     /**
-     * Return a flash session
+     * Retrieve a single flash notification, or null if not set.
      */
     public function getFlash(string $key): ?string
     {
-        return $this->getFlashMessage(static::FLASH_KEY, $key);
+        return $this->readFlashEntry(static::FLASH_KEY, $key);
     }
 
     /**
-     * Return all flash session - key & value only
+     * Return all flash notifications as a flat key→message array.
+     *
+     * @return array<string, string>
      */
     public function flashBag(): array
     {
-        return $this->getBag(static::FLASH_KEY);
+        return $this->readBag(static::FLASH_KEY);
     }
 
+    // -------------------------------------------------------------------------
+    // Error bag (validation errors)
+    // -------------------------------------------------------------------------
+
     /**
-     * Set a error flash session
+     * Store a validation error under $key.
      */
     public function setErrorFlash(string $key, string $message): void
     {
-        $this->setFlashMessage(static::ERROR_KEY, $key, $message);
+        $this->writeFlashEntry(static::ERROR_KEY, $key, $message);
     }
 
     /**
-     * Return a error flash session
+     * Retrieve a single validation error, or null if not set.
      */
     public function getErrorFlash(string $key): ?string
     {
-        return $this->getFlashMessage(static::ERROR_KEY, $key);
+        return $this->readFlashEntry(static::ERROR_KEY, $key);
     }
 
     /**
-     * Return all error flash session - key & value only
+     * Return all validation errors as a flat key→message array.
+     *
+     * @return array<string, string>
      */
     public function errorBag(): array
     {
-        return $this->getBag(static::ERROR_KEY);
+        return $this->readBag(static::ERROR_KEY);
     }
 
+    // -------------------------------------------------------------------------
+    // General session
+    // -------------------------------------------------------------------------
+
     /**
-     * Set a session
+     * Store a value in the session. String values are sanitized.
      */
     public function set(string $key, mixed $value): void
     {
@@ -119,7 +99,7 @@ class Session
     }
 
     /**
-     * Return a session
+     * Retrieve a session value, or null if the key is not set.
      */
     public function get(string $key): mixed
     {
@@ -127,38 +107,78 @@ class Session
     }
 
     /**
-     * Return all session
+     * Return the entire session as an array.
+     *
+     * @return array<string, mixed>
      */
     public function all(): array
     {
         return $_SESSION ?? [];
     }
 
+    // -------------------------------------------------------------------------
+    // Internal flash management
+    // -------------------------------------------------------------------------
+
     /**
-     * Convert all flash sessions to removable
+     * Write a sanitized flash entry to the given bag.
      */
-    protected function toFlush(): void
+    protected function writeFlashEntry(string $bag, string $key, string $message): void
+    {
+        $_SESSION[$bag][$key] = [
+            'value'  => strip_tags(htmlspecialchars($message, ENT_QUOTES, 'UTF-8')),
+            'remove' => false,
+        ];
+    }
+
+    /**
+     * Read a single flash entry value, or null if absent.
+     */
+    protected function readFlashEntry(string $bag, string $key): ?string
+    {
+        return $_SESSION[$bag][$key]['value'] ?? null;
+    }
+
+    /**
+     * Return all entries in a bag as a flat key→message array.
+     *
+     * @return array<string, string>
+     */
+    protected function readBag(string $bag): array
+    {
+        $entries = $_SESSION[$bag] ?? [];
+        return array_map(fn (array $entry) => $entry['value'], $entries);
+    }
+
+    /**
+     * Mark all existing flash entries for removal at end-of-request.
+     * Called on construction so entries from the *previous* request are flushed.
+     */
+    protected function markForFlush(): void
     {
         foreach ([static::FLASH_KEY, static::ERROR_KEY] as $bag) {
-            if (isset($_SESSION[$bag])) {
-                foreach ($_SESSION[$bag] as &$message) {
-                    $message['remove'] = true;
-                }
+            if (!isset($_SESSION[$bag])) {
+                continue;
             }
+            foreach ($_SESSION[$bag] as &$entry) {
+                $entry['remove'] = true;
+            }
+            unset($entry);
         }
     }
 
     /**
-     * Flush all removable flash sessions
+     * Delete all flash entries that were marked for removal.
      */
     protected function flush(): void
     {
         foreach ([static::FLASH_KEY, static::ERROR_KEY] as $bag) {
-            if (isset($_SESSION[$bag])) {
-                foreach ($_SESSION[$bag] as $key => $message) {
-                    if ($message['remove']) {
-                        unset($_SESSION[$bag][$key]);
-                    }
+            if (!isset($_SESSION[$bag])) {
+                continue;
+            }
+            foreach ($_SESSION[$bag] as $key => $entry) {
+                if ($entry['remove']) {
+                    unset($_SESSION[$bag][$key]);
                 }
             }
         }

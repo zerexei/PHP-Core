@@ -1,17 +1,20 @@
 <?php
 
-namespace Zeretei\PHPCore\Http\Traits;
+namespace Zerexei\PHPCore\Http\Traits;
 
 trait Route
 {
     /**
-     * Load routes file
+     * Load a routes file and register its routes against this router.
+     * The file must return a callable that accepts a Router instance.
+     *
+     * @throws \Exception if the file does not exist.
      */
-    public function load(string $file)
+    public function load(string $file): static
     {
         if (!file_exists($file)) {
             throw new \Exception(
-                sprintf('File: "%s" does not exist.', $file)
+                sprintf('Routes file "%s" does not exist.', $file)
             );
         }
 
@@ -21,7 +24,7 @@ trait Route
     }
 
     /**
-     * Get request
+     * Register a GET route.
      */
     public function get(string $url, array|callable $controller): void
     {
@@ -29,7 +32,7 @@ trait Route
     }
 
     /**
-     * Post request
+     * Register a POST route.
      */
     public function post(string $url, array|callable $controller): void
     {
@@ -37,7 +40,7 @@ trait Route
     }
 
     /**
-     * PATCH request
+     * Register a PATCH route.
      */
     public function patch(string $url, array|callable $controller): void
     {
@@ -45,7 +48,7 @@ trait Route
     }
 
     /**
-     * PUT request
+     * Register a PUT route.
      */
     public function put(string $url, array|callable $controller): void
     {
@@ -53,7 +56,7 @@ trait Route
     }
 
     /**
-     * DELETE request
+     * Register a DELETE route.
      */
     public function delete(string $url, array|callable $controller): void
     {

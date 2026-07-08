@@ -1,40 +1,50 @@
 <?php
 
-namespace Zeretei\PHPCore\Http\Traits;
+namespace Zerexei\PHPCore\Http\Traits;
 
 trait RouterController
 {
     /**
-     * Available wildcard regex pattern
+     * Named wildcard patterns used in route definitions.
+     * Each key is the placeholder token; the value is its regex capture group.
+     *
+     * @var array<string, string>
      */
     protected array $patterns = [
-        ":int" => "(\d+)",
-        ":char" => "([a-zA-Z]+)",
-        ":str" => "(\w+)",
-        ":any" => "(.+)",
+        ':int'  => '(\d+)',
+        ':char' => '([a-zA-Z]+)',
+        ':str'  => '(\w+)',
+        ':any'  => '(.+)',
     ];
 
     /**
-     * Get all routes with wildcard
+     * Return only the routes that contain at least one wildcard token.
+     *
+     * @param array<string, array|callable> $routes
+     * @return array<string, array|callable>
      */
     protected function getRoutesWithWildcard(array $routes): array
     {
-        $hasWildcard = fn ($_, $route) => str_contains($route, ':');
-        return array_filter($routes, $hasWildcard, ARRAY_FILTER_USE_BOTH);
+        return array_filter(
+            $routes,
+            fn (mixed $_, string $route) => str_contains($route, ':'),
+            ARRAY_FILTER_USE_BOTH
+        );
     }
 
     /**
-     * Match the request url with the wildcard route
+     * Attempt to match a wildcard route pattern against the request URI.
+     * On a match, captured segments are stored in $this->attributes.
      */
     protected function matchWildcard(string $route, string $url): bool
     {
-        $searches = array_keys($this->patterns);
-        $replaces = array_values($this->patterns);
-        $regex = str_replace($searches, $replaces, $route);
+        $regex = str_replace(
+            array_keys($this->patterns),
+            array_values($this->patterns),
+            $route
+        );
 
         if (preg_match("#^{$regex}$#", $url, $values)) {
-            //! NOTE: this can be bad since it depends on Router class
-            //? create an interface to fix this issue
             $this->attributes = array_slice($values, 1);
             return true;
         }
@@ -43,46 +53,48 @@ trait RouterController
     }
 
     /**
-     * Call matched controller action
+     * Instantiate the controller, run applicable middlewares, and invoke the action.
+     *
+     * @param array{0: class-string, 1?: string} $controller
      */
     protected function callAction(array $controller): mixed
     {
-        if (!class_exists($controller[0])) {
+        [$class, $action] = [...$controller, null];
+
+        if (!class_exists($class)) {
             throw new \Exception(
-                sprintf('Controller: "%s" does not exist.', $controller[0])
+                sprintf('Controller "%s" does not exist.', $class)
             );
         }
 
-        [$controller, $action] = [...$controller, null];
-
-        $class = new $controller();
+        $instance = new $class();
 
         if (is_null($action)) {
-            return $this->callInvoke($class);
+            return $this->callInvoke($instance);
         }
 
-        $class->setAction($action);
+        $instance->setAction($action);
 
-        foreach ($class->getMiddlewares() as $middleware) {
-            $middleware->execute($action, ...$this->attributes);
+        foreach ($instance->getMiddlewares() as $middleware) {
+            if ($middleware->shouldExecute($action)) {
+                $middleware->execute($action, ...$this->attributes);
+            }
         }
 
-        return $class->$action(...$this->attributes);
+        return $instance->$action(...$this->attributes);
     }
 
     /**
-     * Call __invoke magic method
-     *
-     * ? instead of object type, create an interface for model
+     * Invoke a single-action controller via its __invoke method.
      */
-    protected function callInvoke(object $class): mixed
+    protected function callInvoke(object $instance): mixed
     {
-        if (!is_callable($class)) {
+        if (!is_callable($instance)) {
             throw new \Exception(
-                sprintf('Method: "__invoke" does not exist on %s.', $class::class)
+                sprintf('"%s" does not implement __invoke().', $instance::class)
             );
         }
 
-        return $class();
+        return $instance();
     }
 }

@@ -1,127 +1,160 @@
 <?php
 
-namespace Zeretei\PHPCore\Database;
+namespace Zerexei\PHPCore\Database;
 
-use \Zeretei\PHPCore\Application;
+use \Zerexei\PHPCore\Application;
 
+/**
+ * File-based migration runner.
+ *
+ * ## Migration file naming convention
+ *
+ * Files must live in `<path.databases>/migrations/` and follow this pattern:
+ *
+ *   `<numeric_prefix>_<PascalCase_parts>.php`
+ *
+ * Examples:
+ *   - `0001_create_users_table.php`  → class `CreateUsersTable`
+ *   - `0002_add_email_to_users.php`  → class `AddEmailToUsers`
+ *
+ * The numeric prefix determines the application order (scandir alphabetical).
+ * Each file must declare a class whose name matches the derived class name above,
+ * and that class must implement an `up(): string` method returning a valid SQL statement.
+ *
+ * Applied migration filenames are recorded in the `migrations` database table so
+ * they are never run twice.
+ */
 class Migration
 {
     /**
-     * Apply all the available migration
+     * Apply all pending migrations in alphabetical filename order.
+     *
+     * @return list<string> Filenames of the newly applied migrations.
+     * @throws \Exception on configuration or file/class errors.
      */
-    public function apply()
+    public function apply(): array
     {
         if (!Application::has('database')) {
-            throw new \Exception("Please setup a database.");
+            throw new \Exception('A database service must be registered before running migrations.');
         }
 
         if (!Application::has('path.databases')) {
-            throw new \Exception("Please setup a migration path.");
+            throw new \Exception('The "path.databases" container binding must be set before running migrations.');
         }
 
-        $migrationDirPath = Application::get('path.databases') . '/migrations';
+        $migrationDir = Application::get('path.databases') . '/migrations';
 
-        if (!file_exists($migrationDirPath) || !is_dir($migrationDirPath)) {
+        if (!is_dir($migrationDir)) {
             throw new \Exception(
-                sprintf('Directory: "%s" does not exist.', $migrationDirPath)
+                sprintf('Migration directory "%s" does not exist.', $migrationDir)
             );
         }
 
         $this->createMigrationsTable();
 
-        $appliedMigrations = $this->getAppliedMigrations();
+        $applied  = $this->getAppliedMigrations();
+        $files    = array_diff((array) scandir($migrationDir), ['.', '..']);
+        $pending  = array_diff($files, $applied);
 
-        $migrations = array_diff(scandir($migrationDirPath), ['.', '..']);
-        $toApplyMigrations = array_diff($migrations, $appliedMigrations);
+        $newlyApplied = [];
 
-        $newMigrations = [];
+        foreach ($pending as $filename) {
+            require_once $migrationDir . '/' . $filename;
 
-        foreach ($toApplyMigrations as $migration) {
-            require_once $migrationDirPath . "/" . $migration;
-
-            $class = $this->getClassname($migration);
+            $class = $this->deriveClassname($filename);
 
             if (!class_exists($class)) {
                 throw new \Exception(
-                    sprintf('Class: "%s" does not exist on FILE: "%s".', $class, $migration)
+                    sprintf('Expected class "%s" not found in migration file "%s".', $class, $filename)
                 );
             }
 
-            $object = new $class();
+            $migration = new $class();
 
-            if (!method_exists($object::class, 'up')) {
-                throw new \Exception(sprintf(
-                    'Method: "up()" does not exist on Class: "%s" in File: "%s".',
-                    $object::class,
-                    $migration
-                ));
+            if (!method_exists($migration, 'up')) {
+                throw new \Exception(
+                    sprintf('Migration class "%s" must implement an up(): string method.', $class)
+                );
             }
 
-            $sql = $object->up();
+            $sql = $migration->up();
 
             if (!is_string($sql)) {
-                throw new \Exception("Method: up() must return a sql syntax.");
+                throw new \Exception(
+                    sprintf('Migration "%s::up()" must return a SQL string.', $class)
+                );
             }
 
             Application::get('database')->execute($sql);
 
-            $newMigrations[] = $migration;
+            $newlyApplied[] = $filename;
         }
 
-        $this->saveMigrations($newMigrations);
+        $this->saveMigrations($newlyApplied);
 
-        return $newMigrations;
+        return $newlyApplied;
     }
 
     /**
-     * Create applied migrations table
+     * Create the migrations tracking table if it does not already exist.
      */
-    protected function createMigrationsTable(): bool
+    protected function createMigrationsTable(): void
     {
         $sql = "CREATE TABLE IF NOT EXISTS migrations (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            migration VARCHAR(255),
+            id         INT AUTO_INCREMENT PRIMARY KEY,
+            migration  VARCHAR(255) NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )";
 
-        return Application::get('database')->execute($sql);
+        Application::get('database')->execute($sql);
     }
 
     /**
-     * Get all applied migration
+     * Return the filenames of all previously applied migrations.
+     *
+     * @return list<string>
      */
     protected function getAppliedMigrations(): array
     {
-        $sql = "SELECT migration FROM migrations";
-        $migrations = Application::get('database')->fetchAll($sql);
-        return  array_map(fn ($i) => $i['migration'], $migrations);
+        $rows = Application::get('database')->fetchAll('SELECT migration FROM migrations');
+        return array_map(fn (array $row) => $row['migration'], $rows);
     }
 
     /**
-     * Save applied migrations
+     * Persist the newly applied migration filenames to the tracking table.
      */
     protected function saveMigrations(array $migrations): bool
     {
-        $count = count($migrations);
+        if (empty($migrations)) {
+            return false;
+        }
 
-        if ($count === 0) return false;
-
-        $params = trim(str_repeat("(?),", $count), ',');
-        $sql = "INSERT INTO migrations (migration) VALUES $params";
+        $placeholders = implode(', ', array_fill(0, count($migrations), '(?)'));
+        $sql = "INSERT INTO migrations (migration) VALUES {$placeholders}";
 
         return Application::get('database')->query($sql, $migrations);
     }
 
     /**
-     * Get class name of file
+     * Derive the expected PHP class name from a migration filename.
+     *
+     * The numeric prefix (e.g. "0001_") is stripped, the remaining underscore-
+     * delimited words are each ucfirst'd and joined.
+     *
+     * Examples:
+     *   "0001_create_users_table.php" → "CreateUsersTable"
+     *   "0002_add_email_to_users.php" → "AddEmailToUsers"
      */
-    protected function getClassname(string $migration): string
+    protected function deriveClassname(string $filename): string
     {
-        $filename = pathinfo($migration, PATHINFO_FILENAME);
-        $parts = explode('_', $filename);
-        if (count($parts) > 1) {
+        $name  = pathinfo($filename, PATHINFO_FILENAME);
+        $parts = explode('_', $name);
+
+        // Drop the leading numeric prefix if present.
+        if (count($parts) > 1 && ctype_digit($parts[0])) {
             $parts = array_slice($parts, 1);
         }
+
         return implode('', array_map('ucfirst', $parts));
     }
 }

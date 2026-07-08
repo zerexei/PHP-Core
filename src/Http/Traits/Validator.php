@@ -1,35 +1,42 @@
 <?php
 
-namespace Zeretei\PHPCore\Http\Traits;
+namespace Zerexei\PHPCore\Http\Traits;
 
-use \Zeretei\PHPCore\Application;
-use \Zeretei\PHPCore\Http\Request;
+use \Zerexei\PHPCore\Application;
+use \Zerexei\PHPCore\Http\Request;
 
 trait Validator
 {
     /**
-     * Rules error message
+     * Default error message templates.
+     * Placeholders are wrapped in curly braces: {field}, {min}, {max}, {key}.
+     *
+     * @var array<string, string>
      */
-    protected static $ERROR_MESSAGES = [
+    protected static array $ERROR_MESSAGES = [
         'required' => 'The {field} is required.',
-        'string' => 'The {field} must be a string.',
-        'email' => 'Invalid Email Address.',
-        'min' => 'Your {field} is too short, min of {min}.',
-        'max' => 'Your {field} is too long, max of {max}.',
-        'same' => 'The {field} and {key} did not match.',
-        'confirm' => 'The {field} and confirm {field} did not match.',
+        'string'   => 'The {field} must be a string.',
+        'email'    => 'Invalid email address.',
+        'min'      => 'The {field} is too short (minimum {min} characters).',
+        'max'      => 'The {field} is too long (maximum {max} characters).',
+        'same'     => 'The {field} and {key} did not match.',
+        'confirm'  => 'The {field} confirmation did not match.',
     ];
 
     /**
-     * input name (<input name="" />)
+     * The current field name being validated (matches the HTML input name attribute).
      */
-    protected $input;
-
-    // private const PASSED = true;
-    // private const FAILED = false;
+    protected string $input = '';
 
     /**
-     * Validate input fields with rules
+     * Validate an associative map of field-name => rule(s).
+     *
+     * Rules may be a pipe-delimited string ("required|min:6|max:255") or an array.
+     * Returns the validated key-value pairs on success, or redirects back with
+     * session errors on failure (never returns null on a validation error).
+     *
+     * @param array<string, string|list<string>> $fields
+     * @return array<string, mixed>|never
      */
     public function validate(array $fields): ?array
     {
@@ -37,46 +44,48 @@ trait Validator
 
         foreach ($fields as $key => $rules) {
             if (!is_string($key)) {
-                $rulesStr = is_array($rules) ? json_encode($rules) : (string)$rules;
+                $rulesStr = is_array($rules) ? implode('|', $rules) : (string) $rules;
                 throw new \Exception(
-                    sprintf('Request is missing a field or a rule for validation key: "%s"', $rulesStr)
+                    sprintf('Missing field name for validation rules: "%s".', $rulesStr)
                 );
             }
 
-            $value = Request::request($key);
-
             $this->input = $key;
+            $value = Request::request($key);
 
             if (is_null($value)) {
                 throw new \Exception(
-                    sprintf('request field "%s" does not exist.', $this->input)
+                    sprintf('Request field "%s" is not present in the submitted data.', $key)
                 );
             }
 
-            // if "required|min:6|max:255"  (string with `|`)
-            // convert to ["required", "min:6", "max:255"]
-            $rules = !is_string($rules) ? $rules : explode("|", $rules);
+            // Normalize string rules to an array: "required|min:6" → ['required', 'min:6']
+            $ruleList = is_string($rules) ? explode('|', $rules) : $rules;
 
-            foreach ($rules as $rule) {
-                //! change to false (tests should pass)
-                if ($this->execute($rule, $value)) break;
+            foreach ($ruleList as $rule) {
+                // execute() returns true when a rule fails; short-circuit remaining rules.
+                if ($this->execute($rule, $value)) {
+                    break;
+                }
             }
 
             $validated[$key] = $value;
         }
 
-        $hasError = count(Application::get('session')->errorBag()) > 0;
+        $hasErrors = count(Application::get('session')->errorBag()) > 0;
 
-        return (!$hasError) ? $validated : Application::get('router')->back();
+        return $hasErrors
+            ? Application::get('router')->back()
+            : $validated;
     }
 
-
     /**
-     * Check if the request is set and has a value
+     * Rule: the field must be non-empty.
+     * Returns true (failure) when the value is empty, false (pass) otherwise.
      */
     protected function required(string $request): bool
     {
-        if (!isset($request) || empty($request)) {
+        if ($request === '') {
             $this->error('required', ['field' => $this->input]);
             return true;
         }
@@ -84,7 +93,8 @@ trait Validator
     }
 
     /**
-     * Check if the Request is a string
+     * Rule: the field must be a string.
+     * Since all HTTP input is a string, this guards against programmatic misuse.
      */
     protected function string(string $request): bool
     {
@@ -92,17 +102,18 @@ trait Validator
             $this->error('string', ['field' => $this->input]);
             return true;
         }
-
         return false;
     }
 
     /**
-     * Check if the rule minimum value passed
+     * Rule: the field must be at least $value characters long.
+     *
+     * @throws \Exception when $value is not a positive integer string.
      */
-    protected function min(string  $request, string $value)
+    protected function min(string $request, string $value): bool
     {
         if (!$this->isNumeric($value)) {
-            throw new \Exception('Rule "min" must not contain a non numerical value.');
+            throw new \Exception('The "min" rule value must be a positive integer.');
         }
 
         if (strlen($request) < (int) $value) {
@@ -113,14 +124,15 @@ trait Validator
         return false;
     }
 
-
     /**
-     * Check if the rule maximum value didn't exceed
+     * Rule: the field must not exceed $value characters.
+     *
+     * @throws \Exception when $value is not a positive integer string.
      */
     protected function max(string $request, string $value): bool
     {
         if (!$this->isNumeric($value)) {
-            throw new \Exception('Rule "max" must not contain a non numerical value.');
+            throw new \Exception('The "max" rule value must be a positive integer.');
         }
 
         if (strlen($request) > (int) $value) {
@@ -132,35 +144,34 @@ trait Validator
     }
 
     /**
-     * Check if the request is a valid email address
+     * Rule: the field must be a valid email address.
      */
-    protected function email($request): bool
+    protected function email(string $request): bool
     {
         if (!$this->isEmail($request)) {
             $this->error('email');
             return true;
         }
-
         return false;
     }
 
     /**
-     * Check if the 2 inputs matched
+     * Rule: the field value must equal the value of another field ($key).
      */
-    protected function same(string $request, string $key)
+    protected function same(string $request, string $key): bool
     {
         if (Request::request($key) !== $request) {
             $this->error('same', ['field' => $this->input, 'key' => $key]);
             return true;
         }
-
         return false;
     }
 
     /**
-     * Check if the input and the confirm input matched
+     * Rule: the field value must equal its auto-named confirmation field
+     * (e.g., "password" must match "password_confirmation").
      */
-    protected function confirm(string $request)
+    protected function confirm(string $request): bool
     {
         $key = $this->input . '_confirmation';
 
@@ -168,12 +179,11 @@ trait Validator
             $this->error('confirm', ['field' => $this->input]);
             return true;
         }
-
         return false;
     }
 
     /**
-     * Check if string $value only contains numeric value
+     * Return true when $value is a non-empty string of digits.
      */
     public function isNumeric(string $value): bool
     {
@@ -181,49 +191,47 @@ trait Validator
     }
 
     /**
-     * Check if $value is an email
+     * Return true when $email passes both PHP's email filter and a basic regex check.
      */
     public function isEmail(string $email): bool
     {
-        $sanitizedEmail = filter_var($email, FILTER_SANITIZE_EMAIL);
-        $isFilterValidEmail = filter_var($sanitizedEmail, FILTER_VALIDATE_EMAIL);
-        $isRegexValidEmail = preg_match('/^[\w\.]{3,50}@\w{2,12}\.\w{2,8}$/', $sanitizedEmail);
-        return (bool) ($isFilterValidEmail && $isRegexValidEmail);
+        $sanitized = (string) filter_var($email, FILTER_SANITIZE_EMAIL);
+        return filter_var($sanitized, FILTER_VALIDATE_EMAIL) !== false
+            && preg_match('/^[\w.]{3,50}@\w{2,12}\.\w{2,8}$/', $sanitized) === 1;
     }
 
     /**
-     * Set the session errors
+     * Store a validation error in the session error bag for the current field.
+     *
+     * @param array<string, string> $params Template placeholder replacements.
      */
-    protected function error(string $key, array $params = [])
+    protected function error(string $key, array $params = []): void
     {
-        $message = $this->getErrors()[$key] ?? '';
+        $message = static::$ERROR_MESSAGES[$key] ?? '';
 
-        foreach ($params as $key => $value) {
-            $message = str_replace("{{$key}}", $value, $message);
+        foreach ($params as $placeholder => $replacement) {
+            $message = str_replace("{{$placeholder}}", $replacement, $message);
         }
 
         Application::get('session')->setErrorFlash($this->input, $message);
     }
 
     /**
-     * All errors
-     */
-    protected function getErrors(): array
-    {
-        return static::$ERROR_MESSAGES;
-    }
-
-    /**
-     * Execute rule
+     * Execute a single validation rule against $value.
+     *
+     * Returns true when the rule fails (signals the caller to short-circuit).
+     * Returns false when the rule passes.
+     *
+     * @throws \Exception when the rule name does not correspond to a known method.
      */
     protected function execute(string $rule, mixed $value): bool
     {
-        [$rule, $parameter] = [...explode(':', $rule), null];
+        [$ruleName, $parameter] = [...explode(':', $rule, 2), null];
 
-        if (!method_exists($this::class, $rule)) {
-            throw new \Exception(sprintf('Rule "%s" does not exist', $rule));
+        if (!method_exists($this, $ruleName)) {
+            throw new \Exception(sprintf('Validation rule "%s" does not exist.', $ruleName));
         }
 
-        return $this->{$rule}($value, $parameter);
+        return $this->{$ruleName}($value, $parameter);
     }
 }
